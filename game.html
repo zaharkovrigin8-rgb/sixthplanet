@@ -2645,7 +2645,7 @@ window.SOC={talk:talk,rels:rels,quote:quote,startWander:startWander,won:won,S:S}
 (function(){
 var MP=window.MP={role:null,conns:[],viewers:[],viewing:false,vw:null,others:new Map(),spd:1,msg:'',n:0,adopted:false,tk:0};
 var $=function(i){return document.getElementById(i)};
-var ICE=[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302','stun:stun.cloudflare.com:3478','stun:global.stun.twilio.com:3478']},{urls:['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443?transport=tcp'],username:'openrelayproject',credential:'openrelayproject'}];
+var ICE=[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302','stun:stun.cloudflare.com:3478','stun:global.stun.twilio.com:3478']},{urls:['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443','turn:openrelay.metered.ca:80?transport=tcp','turn:openrelay.metered.ca:443?transport=tcp','turns:openrelay.metered.ca:443?transport=tcp'],username:'openrelayproject',credential:'openrelayproject'}];
 function inGame(){return PL.cur>=0&&cols.length&&$('menu').style.display==='none'&&$('planet').style.display==='none'&&!MP.viewing}
 function say(t,bad){MP.msg=t;var e=$('mpmsg');if(e){e.textContent=t;e.style.color=bad?'#e88':'#cfe3a8'}}
 var tt=0;function toast(t){var e=$('mptoast');e.textContent=t;e.style.display='block';clearTimeout(tt);tt=setTimeout(function(){e.style.display='none'},9000)}
@@ -7528,7 +7528,8 @@ $('mprgo').onclick=async function(){var c=($('mprin').value||'').toUpperCase().r
  try{var r=await fetch(BASE+tp('o',c)+'/json?poll=1&since=all');var t=await r.text(),m='';t.split('\n').forEach(function(l){try{var j=JSON.parse(l);if(j.event==='message'&&j.message)m=j.message}catch(e){}});
   if(!m){say('Сервер с таким кодом не найден. Проверь код или попроси хозяина создать сервер.',1);return}
   gcode=c;lastAns='';$('mpcode').value=m;$('mpjoin').click()}catch(e){say(nc(e),1)}};
-function listen(){if(es)return;try{es=new EventSource(BASE+tp('a',code)+'/sse');es.onmessage=function(ev){try{var j=JSON.parse(ev.data);if(j.event!=='message'||!j.message||j.message===lastAns)return;lastAns=j.message;$('mpgot').value=j.message;$('mpaccept').click()}catch(e){}}}catch(e){}}
+var seen={},first=1;
+function listen(){if(es)return;es=1;var tick=async function(){try{var r=await fetch(BASE+tp('a',code)+'/json?poll=1&since=all');var t=await r.text();t.split('\n').forEach(function(l){try{var j=JSON.parse(l);if(j.event!=='message'||!j.message||seen[j.id])return;seen[j.id]=1;if(first)return;if(j.message===lastAns)return;lastAns=j.message;say('Друг ответил, соединяюсь…');$('mpgot').value=j.message;$('mpaccept').click()}catch(e){}});first=0}catch(e){}setTimeout(tick,1500)};tick()}
 setInterval(function(){try{
  var host=MP.role==='host';$('mprjoin').style.display=MP.role?'none':'block';$('mprcodebox').style.display=host?'block':'none';
  if(host){if(!code){code='';for(var i=0;i<5;i++)code+=AL[Math.floor(Math.random()*AL.length)];$('mprcode').textContent=code;listen()}
