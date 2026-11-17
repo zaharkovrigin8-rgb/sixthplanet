@@ -2750,7 +2750,7 @@ $('mpstart').onclick=hostStart;$('mpmore').onclick=function(){MP.inv='';newInvit
 $('mpjoin').onclick=function(){join($('mpcode').value)};$('mpcp1').onclick=function(){copy('mpinv')};$('mpcp2').onclick=function(){copy('mpans')};
 $('mpclose').onclick=function(){$('mpd').style.display='none'};$('mpstop').onclick=function(){location.reload()};
 $('mmmp').onclick=function(){say('');showDlg()};var b2=$('bmp');if(b2)b2.onclick=function(){say('');showDlg()};
-$('mphud').addEventListener('pointerdown',function(e){e.stopPropagation()});$('mphud').onclick=function(e){if(MP.role==='host'&&e.target.tagName!=='BUTTON')showDlg()};
+$('mphud').addEventListener('pointerdown',function(e){e.stopPropagation()});$('mphud').onclick=function(e){if(MP.role==='host'&&e.target.tagName!=='BUTTON')showDlg()};MP.core={wrap:wrap,onOpen:onOpen,onClose:onClose,onMsg:onMsg};
 })();
 </script>
 <style>
@@ -7537,6 +7537,63 @@ setInterval(function(){try{
   var n=MP.conns.length;if(n>cnt&&!busy){cnt=n;busy=1;setTimeout(function(){busy=0;var b=$('mpmore');if(b)b.click()},500)}}
  if(gcode&&!MP.role){var a=$('mpans').value;if(a&&a!==lastAns&&a.length<4000){lastAns=a;pub(tp('a',gcode),a).then(function(){say('Ответ отправлен, соединяюсь…')}).catch(function(e){say(nc(e),1)})}}
 }catch(e){}},600);
+})();
+</script>
+<script>
+/*MP-MQTT*/(function(){
+// Запасной путь без прямой связи: игра идёт через бесплатные публичные MQTT-серверы (WebSocket), это работает почти в любой сети.
+var $=function(i){return document.getElementById(i)},core=window.MP&&MP.core;if(!core)return;
+var BR=window.MPR_BROKERS||['wss://broker.hivemq.com:8884/mqtt','wss://broker.emqx.io:8084/mqtt','wss://test.mosquitto.org:8081'];
+var TE=new TextEncoder(),TD=new TextDecoder();
+function cat(){var n=0,i;for(i=0;i<arguments.length;i++)n+=arguments[i].length;var o=new Uint8Array(n),p=0;for(i=0;i<arguments.length;i++){o.set(arguments[i],p);p+=arguments[i].length}return o}
+function str(s){var b=TE.encode(s);return cat(new Uint8Array([b.length>>8,b.length&255]),b)}
+function pkt(h,body){var l=body.length,rl=[];do{var d=l%128;l=Math.floor(l/128);if(l>0)d|=128;rl.push(d)}while(l>0);return cat(new Uint8Array([h].concat(rl)),body)}
+function MQ(url,onmsg,onclose){var ws,buf=new Uint8Array(0),ok=false,ping=0,self={};
+ self.open=function(){return new Promise(function(res,rej){var t=setTimeout(function(){try{ws.close()}catch(e){}rej(new Error('timeout'))},6000);
+  try{ws=new WebSocket(url,'mqtt')}catch(e){clearTimeout(t);rej(e);return}
+  ws.binaryType='arraybuffer';
+  ws.onopen=function(){ws.send(pkt(0x10,cat(str('MQTT'),new Uint8Array([4,2,0,30]),str('sp'+Math.random().toString(36).slice(2,10)))))};
+  ws.onmessage=function(ev){buf=cat(buf,new Uint8Array(ev.data));parse()};
+  ws.onerror=function(){};
+  ws.onclose=function(){clearInterval(ping);if(!ok){clearTimeout(t);rej(new Error('closed'))}else if(onclose)onclose()};
+  function parse(){while(buf.length>=2){var ty=buf[0]>>4,i=1,m=1,len=0,b;do{if(i>=buf.length)return;b=buf[i++];len+=(b&127)*m;m*=128}while(b&128);if(buf.length<i+len)return;
+   var body=buf.subarray(i,i+len),h=buf[0];buf=buf.slice(i+len);
+   if(ty===2&&!ok){ok=true;clearTimeout(t);ping=setInterval(function(){try{ws.send(new Uint8Array([0xC0,0]))}catch(e){}},20000);res(self)}
+   else if(ty===3){var tl=(body[0]<<8)|body[1],q=(h>>1)&3,ps=2+tl+(q?2:0);try{onmsg(TD.decode(body.subarray(2,2+tl)),TD.decode(body.subarray(ps)))}catch(e){}}}}
+ })};
+ self.sub=function(t){ws.send(pkt(0x82,cat(new Uint8Array([0,1]),str(t),new Uint8Array([0]))))};
+ self.pub=function(t,x){if(ws.readyState===1)ws.send(pkt(0x30,cat(str(t),TE.encode(x))))};
+ self.buffered=function(){return ws.bufferedAmount};self.close=function(){try{ws.close()}catch(e){}};
+ return self}
+function say(t,bad){var e=$('mpmsg');if(e){e.textContent=t;e.style.color=bad?'#e88':'#cfe3a8'}}
+function room(c){return 'sixthplanet6/'+c}
+// ---- хозяин: слушает комнату на всех доступных серверах
+var hosting='',guests={};
+function startHost(code){hosting=code;
+ BR.forEach(function(u){var q=MQ(u,function(t,x){var gid=x.slice(1,7),k=x[0];
+  if(k==='J'){if(guests[gid]){q.pub(room(code)+'/dn/'+gid,'K');return}
+   var dc={readyState:'open',get bufferedAmount(){return q.buffered()},send:function(s){q.pub(room(code)+'/dn/'+gid,'D'+s)}};
+   var w=core.wrap(dc,function(j){core.onMsg(w,j)},function(){},function(){delete guests[gid];core.onClose(w)});guests[gid]={dc:dc};
+   q.pub(room(code)+'/dn/'+gid,'K');core.onOpen(w)}
+  else if(k==='D'&&guests[gid]){guests[gid].dc.onmessage({data:x.slice(7)})}
+  else if(k==='L'&&guests[gid]){var d=guests[gid].dc;delete guests[gid];if(d.onclose)d.onclose()}},function(){});
+  q.open().then(function(){q.sub(room(code)+'/up')}).catch(function(){})})}
+// ---- гость
+function mqttJoin(code){return new Promise(async function(res,rej){var gid=Math.random().toString(36).slice(2,8);while(gid.length<6)gid+='x';var q=null,acked=false,dc=null,w=null;
+ function onm(t,x){var k=x[0];if(k==='K'&&!acked){acked=true;dc={readyState:'open',get bufferedAmount(){return q.buffered()},send:function(s){q.pub(room(code)+'/up','D'+gid+s)}};
+   w=core.wrap(dc,function(j){core.onMsg(w,j)},function(){},function(){core.onClose(w)});MP.role='guest';$('mpd').style.display='none';core.onOpen(w);res(true)}
+  else if(k==='D'&&dc){dc.onmessage({data:x.slice(1)})}}
+ var cs=BR.map(function(u){return MQ(u,onm,function(){if(dc&&dc.onclose)dc.onclose()})});
+ try{q=await new Promise(function(r,j){var f=0;cs.forEach(function(c){c.open().then(function(){r(c)},function(){if(++f===cs.length)j()})})})}catch(e){}
+ cs.forEach(function(c){if(c!==q)setTimeout(function(){c.close()},0)});
+ if(!q){rej(new Error('нет серверов'));return}
+ q.sub(room(code)+'/dn/'+gid);var n=0,iv=setInterval(function(){if(acked){clearInterval(iv);return}if(++n>8){clearInterval(iv);q.close();rej(new Error('хозяин не ответил'));return}q.pub(room(code)+'/up','J'+gid)},1200);q.pub(room(code)+'/up','J'+gid);
+ window.addEventListener('beforeunload',function(){try{q.pub(room(code)+'/up','L'+gid)}catch(e){}})})}
+// ---- кнопка «Войти по коду»: сначала через MQTT, потом старым путём
+var go=$('mprgo'),old=go&&go.onclick;
+if(go)go.onclick=function(){var c=($('mprin').value||'').toUpperCase().replace(/[^A-Z0-9]/g,'');if(c.length!==5){say('Введи код из 5 символов.',1);return}if(MP.role)return;say('Подключаюсь через сервер…');
+ mqttJoin(c).catch(function(){say('Через сервер не вышло, пробую напрямую…');if(old)old.call(go)})};
+setInterval(function(){try{if(MP.role==='host'&&!hosting){var c=$('mprcode').textContent;if(c&&c.length===5)startHost(c)}}catch(e){}},700);
 })();
 </script>
 </body></html>
