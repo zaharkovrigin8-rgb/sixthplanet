@@ -7512,6 +7512,7 @@ var BASE=window.MPR_BASE||'https://ntfy.sh/',$=function(i){return document.getEl
 var code='',lastInv='',lastAns='',gcode='',es=null,cnt=0,busy=0;
 function tp(k,c){return 'sixthplanet-'+k+'-'+c}
 function pub(t,x){return fetch(BASE+t,{method:'POST',body:x})}
+function nc(e){return 'Нет связи с сервисом кодов'+(/claude|anthropic/i.test(location.hostname)?'. Внутри приложения Claude внешние запросы закрыты: открой игру по ссылке с сайта (github.io).':' ('+((e&&e.message)||'сеть недоступна')+'). Попробуй другую сеть/VPN или вход вручную.')}
 function say(t,bad){var e=$('mpmsg');if(e){e.textContent=t;e.style.color=bad?'#e88':'#cfe3a8'}}
 var d=$('mpd');if(!d||!window.MP)return;
 var box=document.createElement('div');box.id='mprel';box.style.cssText='margin:8px 0;padding:8px;border:1px solid #5a4028;border-radius:6px;background:#140e0a';
@@ -7526,14 +7527,14 @@ $('mprgo').onclick=async function(){var c=($('mprin').value||'').toUpperCase().r
  if(MP.role)return;say('Ищу сервер…');
  try{var r=await fetch(BASE+tp('o',c)+'/json?poll=1&since=all');var t=await r.text(),m='';t.split('\n').forEach(function(l){try{var j=JSON.parse(l);if(j.event==='message'&&j.message)m=j.message}catch(e){}});
   if(!m){say('Сервер с таким кодом не найден. Проверь код или попроси хозяина создать сервер.',1);return}
-  gcode=c;lastAns='';$('mpcode').value=m;$('mpjoin').click()}catch(e){say('Нет связи с сервисом кодов. Попробуй вручную (ниже) или позже.',1)}};
+  gcode=c;lastAns='';$('mpcode').value=m;$('mpjoin').click()}catch(e){say(nc(e),1)}};
 function listen(){if(es)return;try{es=new EventSource(BASE+tp('a',code)+'/sse');es.onmessage=function(ev){try{var j=JSON.parse(ev.data);if(j.event!=='message'||!j.message||j.message===lastAns)return;lastAns=j.message;$('mpgot').value=j.message;$('mpaccept').click()}catch(e){}}}catch(e){}}
 setInterval(function(){try{
  var host=MP.role==='host';$('mprjoin').style.display=MP.role?'none':'block';$('mprcodebox').style.display=host?'block':'none';
  if(host){if(!code){code='';for(var i=0;i<5;i++)code+=AL[Math.floor(Math.random()*AL.length)];$('mprcode').textContent=code;listen()}
-  var v=$('mpinv').value;if(v&&v!==lastInv&&v.length<4000){lastInv=v;pub(tp('o',code),v).catch(function(){say('Нет связи с сервисом кодов.',1)})}
+  var v=$('mpinv').value;if(v&&v!==lastInv&&v.length<4000){lastInv=v;pub(tp('o',code),v).catch(function(e){say(nc(e),1)})}
   var n=MP.conns.length;if(n>cnt&&!busy){cnt=n;busy=1;setTimeout(function(){busy=0;var b=$('mpmore');if(b)b.click()},500)}}
- if(gcode&&!MP.role){var a=$('mpans').value;if(a&&a!==lastAns&&a.length<4000){lastAns=a;pub(tp('a',gcode),a).then(function(){say('Ответ отправлен, соединяюсь…')}).catch(function(){say('Нет связи с сервисом кодов.',1)})}}
+ if(gcode&&!MP.role){var a=$('mpans').value;if(a&&a!==lastAns&&a.length<4000){lastAns=a;pub(tp('a',gcode),a).then(function(){say('Ответ отправлен, соединяюсь…')}).catch(function(e){say(nc(e),1)})}}
 }catch(e){}},600);
 })();
 </script>
