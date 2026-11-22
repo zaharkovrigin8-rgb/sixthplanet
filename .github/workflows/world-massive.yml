@@ -1,4 +1,4 @@
-name: Integrate WORLD Massive patch
+name: Repair and integrate WORLD patch
 on:
   push:
     branches: [main]
@@ -15,31 +15,39 @@ jobs:
         with:
           ref: main
           token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Attach world systems to the game
+      - name: Repair patch notes JavaScript and attach world systems
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p = Path('game.html')
           s = p.read_text(encoding='utf-8')
+          # The previous integration accidentally doubled the opening brace
+          # of the original patch-notes group, causing a JavaScript parse error.
+          s = s.replace("]},{{t:", "]},{t:")
           tag = '<script src="world-massive.js"></script>'
           if tag not in s:
               if '</body>' not in s:
                   raise SystemExit('game.html has no closing body tag')
-              s = s.replace('</body>', tag + '\n</body>', 1)
-          old = "const PATCH={n:'Бета 2.1B',name:'Рассказчики и монеты'"
-          new = "const PATCH={n:'Бета 2.2',name:'WORLD — Живой мир'"
-          s = s.replace(old, new, 1)
-          marker = "const PATCH={n:'Бета 2.2',name:'WORLD — Живой мир',groups:["
-          world = "const PATCH={n:'Бета 2.2',name:'WORLD — Живой мир',groups:[{t:'Живой мир',l:['Новая дипломатия: нейтралитет, дружба, вражда, война и союзы с соседними цивилизациями','Посольства улучшают отношения; пакты о ненападении защищают мир; разрыв договоров вызывает дипломатический кризис','Торговые пути: регулярные караваны, развитие маршрутов до трёх уровней и остановка торговли при конфликте','Летопись планеты записывает дипломатические решения, торговые события и перемены настроения соседей']},{"
-          s = s.replace(marker, world, 1)
+              s = s.replace('</body>', tag + '\\n</body>', 1)
           p.write_text(s, encoding='utf-8')
           PY
-      - name: Commit integrated game
+      - name: Validate game script syntax
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s = Path('game.html').read_text(encoding='utf-8')
+          scripts = re.findall(r'<script(?:\\s[^>]*)?>(.*?)</script>', s, re.S)
+          Path('/tmp/game-inline.js').write_text('\\n'.join(scripts), encoding='utf-8')
+          PY
+          node --check /tmp/game-inline.js
+          node --check world-massive.js
+      - name: Commit repaired game
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add game.html
           if ! git diff --cached --quiet; then
-            git commit -m "Integrate WORLD Massive patch into game"
+            git commit -m "Fix WORLD patch JavaScript syntax"
             git push origin main
           fi
