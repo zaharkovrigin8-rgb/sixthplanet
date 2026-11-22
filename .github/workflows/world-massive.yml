@@ -15,7 +15,7 @@ jobs:
         with:
           ref: main
           token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Repair patch notes JavaScript
+      - name: Repair and validate WORLD patch
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -26,7 +26,7 @@ jobs:
               s = s.replace('</body>', tag + '\\n</body>', 1)
           Path('game.html').write_text(s, encoding='utf-8')
           start = s.index('const PATCH=')
-          end = s.index('\\n (function(){', start)
+          end = s.index('\\n(function(){', start)
           Path('/tmp/patch-notes.js').write_text(s[start:end], encoding='utf-8')
           PY
           node --check /tmp/patch-notes.js
