@@ -15,32 +15,21 @@ jobs:
         with:
           ref: main
           token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Repair patch notes JavaScript and attach world systems
+      - name: Repair patch notes JavaScript
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p = Path('game.html')
-          s = p.read_text(encoding='utf-8')
-          # The previous integration accidentally doubled the opening brace
-          # of the original patch-notes group, causing a JavaScript parse error.
+          s = Path('game.html').read_text(encoding='utf-8')
           s = s.replace("]},{{t:", "]},{t:")
           tag = '<script src="world-massive.js"></script>'
           if tag not in s:
-              if '</body>' not in s:
-                  raise SystemExit('game.html has no closing body tag')
               s = s.replace('</body>', tag + '\\n</body>', 1)
-          p.write_text(s, encoding='utf-8')
+          Path('game.html').write_text(s, encoding='utf-8')
+          start = s.index('const PATCH=')
+          end = s.index('\\n (function(){', start)
+          Path('/tmp/patch-notes.js').write_text(s[start:end], encoding='utf-8')
           PY
-      - name: Validate game script syntax
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-          s = Path('game.html').read_text(encoding='utf-8')
-          scripts = re.findall(r'<script(?:\\s[^>]*)?>(.*?)</script>', s, re.S)
-          Path('/tmp/game-inline.js').write_text('\\n'.join(scripts), encoding='utf-8')
-          PY
-          node --check /tmp/game-inline.js
+          node --check /tmp/patch-notes.js
           node --check world-massive.js
       - name: Commit repaired game
         run: |
@@ -48,6 +37,6 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add game.html
           if ! git diff --cached --quiet; then
-            git commit -m "Fix WORLD patch JavaScript syntax"
+            git commit -m "Fix WORLD patch notes syntax"
             git push origin main
           fi
