@@ -1,0 +1,60 @@
+name: Publish WORLD 2.2 showcase and trailer
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'world-update.html'
+      - 'tools/build_world_video.py'
+      - '.github/workflows/publish-world-showcase.yml'
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install video tools and fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg espeak python3-pil fonts-dejavu-core
+      - name: Render narrated video and subtitles
+        run: python3 tools/build_world_video.py
+      - name: Add homepage announcement
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          marker='id="sp-world-showcase-link"'
+          if marker not in s:
+              banner='''<a id="sp-world-showcase-link" href="world-update.html" style="display:block;position:sticky;top:0;z-index:99999;padding:12px 18px;text-align:center;background:linear-gradient(90deg,#4c3d26,#75603a);color:#fff0cf;text-decoration:none;font:700 15px system-ui;box-shadow:0 3px 18px #0008">WORLD 2.2 — Живой мир · смотреть видеообзор и читать описание →</a>'''
+              s=re.sub(r'(<body\\b[^>]*>)',r'\\1'+banner,s,count=1,flags=re.I)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit generated media and homepage link
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html world-massive-trailer.mp4 world-massive.ru.vtt world-massive.ru.srt
+          if ! git diff --cached --quiet; then
+            git commit -m "Publish WORLD 2.2 video overview and patch notes"
+            git push
+          fi
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
