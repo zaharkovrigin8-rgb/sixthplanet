@@ -23,10 +23,10 @@ jobs:
           s = s.replace("]},{{t:", "]},{t:")
           tag = '<script src="world-massive.js"></script>'
           if tag not in s:
-              s = s.replace('</body>', tag + '\\n</body>', 1)
+              s = s.replace('</body>', tag + '\n</body>', 1)
           Path('game.html').write_text(s, encoding='utf-8')
           start = s.index('const PATCH=')
-          end = s.index('\\n(function(){', start)
+          end = s.index('\n(function(){', start)
           Path('/tmp/patch-notes.js').write_text(s[start:end], encoding='utf-8')
           PY
           node --check /tmp/patch-notes.js
