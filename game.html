@@ -7636,4 +7636,122 @@ function check(){var st=window.DTH&&DTH.st;if(!st)return;defs.forEach(function(d
 setInterval(check,650);window.SixthPlanetAchievements={open:open,check:check};
 })();
 </script>
+
+<style id="academy-refresh">
+#qt{
+  right:14px;top:88px;width:min(360px,calc(100vw - 28px));
+  max-height:min(62vh,570px);overflow:auto;box-sizing:border-box;
+  padding:14px 15px 13px;border:1px solid rgba(225,181,93,.72);
+  border-left:4px solid #e0b45e;border-radius:14px;
+  background:linear-gradient(145deg,rgba(35,27,21,.97),rgba(12,17,18,.97));
+  box-shadow:0 16px 48px #000b,0 0 28px #d39b3022;
+  backdrop-filter:blur(12px);font:13px/1.5 system-ui,sans-serif;
+}
+#qt:before{content:"SIXTH PLANET  /  FIELD ACADEMY";display:block;margin-bottom:8px;
+  color:#91b77c;font:700 9px/1.2 system-ui,sans-serif;letter-spacing:.2em}
+#qt .qh{font:700 11px system-ui,sans-serif;letter-spacing:.12em;color:#e8bd70}
+#qt .qb{height:6px;background:#45372a;margin:9px 0 11px;border-radius:9px;overflow:hidden}
+#qt .qb i{background:linear-gradient(90deg,#b77a35,#f2d18a,#9fc875);box-shadow:0 0 12px #e9bc67}
+#qt .qt{font:700 19px/1.2 system-ui,sans-serif;color:#fff0d2;margin:2px 0 7px}
+#qt .qsy{min-height:0;margin:8px 0;padding:8px 10px;border:1px solid #a77c3b55;
+  border-left:3px solid #d9aa59;border-radius:8px;background:#d5a54d12;
+  color:#f0dfbd;font-style:normal}
+#qt .qd{color:#e1d7c6;font-size:13px;line-height:1.5}
+#qt .qp{padding:7px 9px;margin-top:9px;border-radius:7px;background:#8dbb5a18;
+  color:#b9df8a;font-size:12px}
+#qt .ql{max-height:68px;color:#a99b83;font-size:11px}
+#qt .qs{color:#e2b960;font:700 11px system-ui,sans-serif;letter-spacing:.08em}
+#qt .qg{color:#a9d18c;font:700 9px system-ui,sans-serif;letter-spacing:.17em}
+#qt .qx{display:flex;gap:7px;margin-top:11px}
+#qt button{flex:1;padding:8px 9px;border-radius:8px;border:1px solid #927346;
+  background:linear-gradient(145deg,#4a3827,#2a211b);color:#f3e3c4;
+  font:700 11px system-ui,sans-serif;letter-spacing:.03em}
+#qt button:hover{background:#61472c;border-color:#e0b45e}
+#qt .qx button:last-child{background:#382a25;border-color:#705044;color:#cdb8a0}
+.qhl{outline:3px solid #ffe08a!important;outline-offset:3px;
+  box-shadow:0 0 0 6px #ffbf3a35,0 0 24px #ffd45a88!important;z-index:56}
+#academy-guide{position:fixed;inset:0;z-index:100010;display:none;align-items:center;
+  justify-content:center;padding:14px;box-sizing:border-box;background:#050809d9;
+  backdrop-filter:blur(8px);font:14px/1.5 system-ui,sans-serif;color:#f0e4cd}
+#academy-card{width:min(720px,100%);max-height:86vh;overflow:auto;box-sizing:border-box;
+  padding:18px;border:1px solid #9e7d49;border-radius:16px;
+  background:linear-gradient(150deg,#28231d,#101719);
+  box-shadow:0 20px 70px #000c}
+#academy-card h2{margin:0;color:#f2d18d;font-size:22px}
+#academy-card .ag-intro{color:#b9ad98;margin:5px 0 14px;font-size:12px}
+#academy-card .ag-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+#academy-card .ag-item{padding:11px;border:1px solid #ffffff20;border-radius:10px;background:#ffffff08}
+#academy-card .ag-item b{display:block;color:#f3d99f;margin-bottom:3px}
+#academy-card .ag-item span{display:block;color:#c8bead;font-size:12px}
+#academy-card .ag-foot{display:flex;justify-content:flex-end;margin-top:14px}
+#academy-card button{padding:9px 18px;border:1px solid #b28a50;border-radius:8px;
+  background:#4a3827;color:#f7e7c7;font-weight:700}
+@media(max-width:640px){
+ #qt{right:8px;top:82px;width:min(292px,calc(100vw - 16px));max-height:48vh;padding:11px 12px}
+ #qt .qt{font-size:16px}#qt .qd{font-size:12px}
+ #academy-card{padding:14px}#academy-card .ag-grid{grid-template-columns:1fr}
+}
+</style>
+<script>
+(function(){
+'use strict';
+var T=window.TUT;if(!T||!T.S||T.S.length<2)return;
+var $=function(id){return document.getElementById(id)};
+var seen={cats:{},orders:{},zoom:0,save:false};
+function track(id,key){var e=$(id);if(e)e.addEventListener('click',function(){if(key==='cats')seen.cats[e.dataset.c] = 1;else if(key==='orders')seen.orders[id]=1;else seen[key]=true},false)}
+['home','furn','prod','eco','def','misc'].forEach(function(c){
+ var e=document.querySelector('#bcat [data-c="'+c+'"]');if(e)e.addEventListener('click',function(){seen.cats[c]=1});
+});
+['tchop','tarea','thunt','tall','tassault'].forEach(function(id){track(id,'orders')});
+track('zi','zoom');track('zo','zoom');track('bsave','save');
+function shown(id){return !!($(id)&&$(id).style.display==='block')}
+var extra=[
+ {ch:5,id:'jobs_open',t:'Назначай профессии',say:'У каждого колониста своя работа. Необязательно делать всё вручную.',d:'Открой «Работы». Здесь таблица приоритетов: 1 — самое важное, 4 — низкий приоритет, «–» — запретить задачу. Настройка действует отдельно для каждого колониста.',hl:['#wbtn'],on:function(){},ok:function(){return shown('jobs')}},
+ {ch:5,id:'jobs_close',t:'Настрой приоритеты',say:'Например, одному поручим стройку, другому — лечение, третьему — охоту.',d:'Посмотри таблицу и закрой окно кнопкой «Закрыть». Приоритеты можно менять в любой момент.',ok:function(){return !shown('jobs')}},
+ {ch:5,id:'schedule_open',t:'Распорядок дня',say:'Колонистам нужен не только труд, но и отдых.',d:'Открой «График». Для каждого часа можно выбрать: любое занятие, работа, отдых или сон. Нажатие на имя копирует расписание остальным.',hl:['#schbtn'],ok:function(){return shown('sch')}},
+ {ch:5,id:'schedule_close',t:'Сохрани режим дня',say:'Ночной сон и отдых помогают пережить долгую колонизацию.',d:'Закрой расписание. Возвращаться к нему можно когда угодно.',ok:function(){return !shown('sch')}},
+ {ch:5,id:'relations_open',t:'Отношения колонистов',say:'Это не просто рабочие единицы — у них есть характер и чувства.',d:'Открой «Связи»: увидишь симпатии, конфликты, пары и недавние события между жителями.',hl:['#sbtn'],ok:function(){return shown('soc')}},
+ {ch:5,id:'relations_close',t:'Следи за настроением',say:'Хорошие отношения помогают колонии жить дружно.',d:'Закрой окно связей. Отношения развиваются во время игры автоматически.',ok:function(){return !shown('soc')}},
+ {ch:5,id:'journal_open',t:'Летопись колонии',say:'Важные события не должны теряться.',d:'Нажми «Журнал» в верхней панели. В нём можно отдельно просматривать угрозы, здоровье и общественные события.',hl:['#uxjb'],ok:function(){return shown('uxj')}},
+ {ch:5,id:'journal_close',t:'Фильтруй события',say:'Если что-то пошло не так, журнал поможет понять причину.',d:'Закрой журнал кнопкой «Закрыть». Новые события отмечаются счётчиком рядом с кнопкой.',ok:function(){return !shown('uxj')}},
+ {ch:5,id:'bestiary_open',t:'Изучи фауну',say:'У каждой планеты свой набор существ. Некоторые могут стать союзниками, другие — угрозой.',d:'Открой «Звери» в верхней панели. В бестиарии есть рацион, среда обитания, здоровье и способности видов.',hl:['#bbest'],ok:function(){return shown('best')}},
+ {ch:5,id:'bestiary_close',t:'Приручение и охота',say:'Не каждый зверь — враг.',d:'Закрой бестиарий. Для охоты используй «Приказы» → «Охота», а приручение доступно в карточке подходящего зверя.',ok:function(){return !shown('best')}},
+ {ch:5,id:'travel_open',t:'Путешествуй по планете',say:'Ты можешь покинуть место высадки и исследовать соседние области.',d:'Нажми «Путь» в верхней панели. Выбери соседний шестиугольник, чтобы перевести туда колонию. Важно: новая область генерируется заново, прежние постройки и ресурсы на карте не переносятся.',hl:['#tbtn'],ok:function(){return shown('trav')}},
+ {ch:5,id:'travel_close',t:'Выбирай маршрут с умом',say:'Каждый переход — это новая территория и новые возможности.',d:'Пока просто закрой список направлений. Путешествие можно начать позже, когда колония будет готова.',ok:function(){return !shown('trav')}},
+ {ch:5,id:'build_categories',t:'Все разделы строительства',say:'В меню «Строить» скрывается целая система колонии.',d:'Открой строительство и по очереди нажми все категории: Жильё, Мебель, Производство, Хозяйство, Защита и Снос. В каждой категории свой набор объектов.',hl:['#tbuild','#bcat'],on:function(){seen.cats={}},ok:function(){return ['home','furn','prod','eco','def','misc'].every(function(c){return !!seen.cats[c]})},pr:function(){return'Разделов изучено: '+Object.keys(seen.cats).filter(function(k){return seen.cats[k]}).length+' / 6'}},
+ {ch:5,id:'orders_tools',t:'Приказы колонии',say:'Приказы позволяют быстро направлять работу жителей.',d:'Открой «Приказы» и нажми каждую команду: Рубка, Область, Охота, Выбрать всех и Штурм гнезда. После выбора инструмента следуй подсказке на карте.',hl:['#tabord'],on:function(){seen.orders={}},ok:function(){return ['tchop','tarea','thunt','tall','tassault'].every(function(id){return !!seen.orders[id]})},pr:function(){return'Команд изучено: '+Object.keys(seen.orders).length+' / 5'}},
+ {ch:5,id:'zoom_controls',t:'Масштаб и обзор',say:'Следи за всей колонией, даже если она разрастается.',d:'Попробуй кнопки «+» и «−» вверху: они приближают и отдаляют карту. На компьютере также работает колёсико мыши.',hl:['#zi','#zo'],on:function(){seen.zoom=0},ok:function(){return !!seen.zoom}},
+ {ch:5,id:'save_controls',t:'Сохраняй поселение',say:'Не рискуй потерять свою колонию.',d:'Нажми «Сохранить». Игра также автоматически сохраняет прогресс; из главного меню можно продолжить сохранённое поселение.',hl:['#bsave'],on:function(){seen.save=false},ok:function(){return !!seen.save}},
+ {ch:5,id:'control_reminder',t:'Ты управляешь историей',say:'Теперь ты знаешь основные инструменты командира.',d:'Выбирай колонистов нажатием, изучай их карточки, отдавай приказы, меняй работы и расписание. В верхней панели доступны скорость, сохранение, справка, звук, сервер, бестиарий, журнал и масштаб. Кнопка «Тревога» собирает жителей для защиты.',hl:['#bar','#tabs'],ok:function(){return true}}
+];
+T.S.splice(T.S.length-1,0,...extra);
+var guideItems=[
+['Карта и управление','Перетаскивай карту пальцем или мышью. Кнопки +/− меняют масштаб. На ПК доступны WASD и стрелки. Выбирай колониста нажатием; рамка позволяет выделить нескольких.'],
+['Карточка колониста','В карточке смотри здоровье, голод, настроение, навыки, мысли и состояние тела. Самоуправление позволяет отдавать выбранному жителю прямые приказы.'],
+['Приказы','Рубка отмечает деревья, Область задаёт участок работы, Охота помечает зверей, Выбрать всех помогает управлять группой, Штурм гнезда отправляет бойцов к угрозе.'],
+['Строительство','Жильё: дома, стены, двери и кровати. Мебель: столы, стулья, костры и декор. Производство: верстак, печь, станок, аптека и научный стол. Хозяйство: поля, склады, погреб и могилы. Защита: ловушки. Снос удаляет ненужные постройки.'],
+['Работы','Приоритет 1 — задача выполняется раньше остальных, 4 — позже, «–» отключает работу. Доступны стройка, ремесло, рубка, поля, приручение, охота, рыбалка, склад, готовка, добыча камня, пленники, похороны и уборка.'],
+['График','Настраивай каждый час: любое занятие, работа, отдых или сон. Нажми на имя колониста, чтобы скопировать его расписание другим.'],
+['Связи и семья','Смотри взаимную симпатию, ссоры, пары и события. Колонисты могут общаться, влюбляться, создавать семьи и заводить детей. Для детей нужны подходящие условия и кроватки.'],
+['Еда и ресурсы','Ягоды, рис, мясо и рыба поддерживают запас еды. Дерево и камень нужны для строительства. Склады помогают организовать ресурсы; погреб замедляет порчу еды.'],
+['Производство и науки','Верстак нужен для изготовления вещей и протезов, печь — для готовки, станок — для одежды, аптека — для лекарств. Научный стол открывает проекты; назначь исследователя в «Работах», чтобы получать очки.'],
+['Угрозы и существа','Слизни нападают волнами и гнёздами. Кнопка «Тревога» собирает колонистов и помогает организовать оборону. «Звери» открывает бестиарий; охота и приручение доступны через приказы и карточки животных.'],
+['События и журнал','Следи за погодой, температурой и событиями. Журнал разделяет записи на угрозы, здоровье и общество. Пришедших странников можно спасать и принимать в колонию; караваны дают возможность торговать.'],
+['Планета и путь','Кнопка «Путь» показывает соседние области. Переход открывает новую местность, но постройки и собранные ресурсы остаются на прежней карте. Планируй экспедицию заранее.'],
+['Время и сохранения','Скорость в верхней панели переключает ход времени и паузу. «Пропустить ночь» появляется при подходящих условиях. «Сохранить» создаёт сохранение; главное меню позволяет продолжить, начать новую колонию или открыть мультиплеер.'],
+['Мультиплеер и настройки','«Сервер» открывает сетевую игру. В главном меню доступны звук и графика; там же можно вернуться в игру или выбрать другое сохранение.']
+];
+var overlay=document.createElement('div');overlay.id='academy-guide';
+overlay.innerHTML='<div id="academy-card"><h2>Полевой справочник</h2><div class="ag-intro">Шестая планета · руководство командира. Здесь собраны основные системы и инструменты игры.</div><div class="ag-grid"></div><div class="ag-foot"><button type="button" id="academy-close">Вернуться к обучению</button></div></div>';
+document.body.appendChild(overlay);
+var grid=overlay.querySelector('.ag-grid');
+guideItems.forEach(function(a){var d=document.createElement('div');d.className='ag-item';var b=document.createElement('b');b.textContent=a[0];var sp=document.createElement('span');sp.textContent=a[1];d.appendChild(b);d.appendChild(sp);grid.appendChild(d)});
+function closeGuide(){overlay.style.display='none'}
+overlay.addEventListener('click',function(e){if(e.target===overlay)closeGuide()});
+overlay.querySelector('#academy-close').onclick=closeGuide;
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&overlay.style.display==='flex')closeGuide()});
+var qh=$('qhelp');if(qh){qh.textContent='Справочник';qh.onclick=function(e){if(e){e.preventDefault();e.stopPropagation()}overlay.style.display='flex'};}
+var qs=$('qskip');if(qs)qs.textContent='Завершить обучение';
+})();
+</script>
 </body></html>
