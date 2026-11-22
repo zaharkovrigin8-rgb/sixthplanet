@@ -7596,4 +7596,44 @@ if(go)go.onclick=function(){var c=($('mprin').value||'').toUpperCase().replace(/
 setInterval(function(){try{if(MP.role==='host'&&!hosting){var c=$('mprcode').textContent;if(c&&c.length===5)startHost(c)}}catch(e){}},700);
 })();
 </script>
+
+<script>
+/* ACHIEVEMENTS */
+(function(){
+'use strict';
+var KEY='sixthplanet_achievements_v1';
+var defs=[
+ {id:'first_kill',icon:'⚔️',name:'Первая победа',desc:'Убейте первого врага',test:function(s){return s.kill>=1}},
+ {id:'nest_destroyer',icon:'💎',name:'Охотник на гнёзда',desc:'Уничтожьте гнездо слизней',test:function(s){return s.nests>=1}},
+ {id:'builder',icon:'🏗️',name:'Основатель',desc:'Постройте 10 объектов',test:function(s){return s.built>=10}}
+];
+var unlocked={},panel,popup;
+try{unlocked=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){unlocked={}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(unlocked))}catch(e){}}
+function el(tag,attrs,html){var n=document.createElement(tag);Object.keys(attrs||{}).forEach(function(k){n.setAttribute(k,attrs[k])});if(html!==undefined)n.innerHTML=html;return n}
+var css=[
+'#ach-open{width:100%;margin:7px auto 0;background:linear-gradient(135deg,#51452e,#30291e);border:1px solid #a98a4d;color:#f5dfad;border-radius:9px;padding:10px;font-weight:700;font-size:14px}',
+'#ach-overlay{position:fixed;inset:0;z-index:100000;background:rgba(5,8,12,.82);display:none;align-items:center;justify-content:center;padding:16px;box-sizing:border-box}',
+'#ach-panel{width:min(470px,100%);max-height:min(78vh,680px);overflow:auto;background:linear-gradient(160deg,#24231f,#111719);border:1px solid #9b814e;border-radius:15px;padding:16px;color:#eee5d2;box-shadow:0 18px 60px #000b;font:14px system-ui;box-sizing:border-box}',
+'#ach-panel h2{margin:0 0 5px;color:#f1d69c;font-size:21px}#ach-sub{color:#b8b09e;margin-bottom:13px}',
+'.ach-row{display:flex;align-items:center;gap:12px;padding:11px;margin:8px 0;background:#ffffff0a;border:1px solid #ffffff18;border-radius:10px}',
+'.ach-icon{width:48px;height:48px;flex:0 0 48px;display:grid;place-items:center;font-size:27px;border-radius:12px;background:linear-gradient(145deg,#665332,#302719);border:1px solid #b29457}',
+'.ach-row.locked{opacity:.55;filter:grayscale(.85)}.ach-name{font-weight:700;color:#f2dfb8}.ach-desc{font-size:12px;color:#b8b3a7;margin-top:3px}.ach-state{font-size:11px;color:#d7bd80;margin-top:4px}',
+'#ach-close{width:100%;margin-top:10px;padding:10px;border-radius:8px;border:1px solid #8b7956;background:#403a2d;color:#f4e5c5;font-weight:700}',
+'#ach-toast{position:fixed;z-index:100001;right:16px;bottom:18px;width:min(330px,calc(100vw - 32px));display:flex;align-items:center;gap:11px;padding:12px;background:linear-gradient(135deg,#29291f,#171d1c);border:1px solid #d0ad62;border-radius:12px;color:#f7ecd2;box-shadow:0 8px 28px #0009;transform:translateY(150%);opacity:0;transition:transform .35s,opacity .35s;pointer-events:none;font:13px system-ui;box-sizing:border-box}',
+'#ach-toast.show{transform:translateY(0);opacity:1}.ach-toast-icon{font-size:31px;width:40px;text-align:center}.ach-toast-title{font-weight:800;color:#f2d38e;font-size:14px}.ach-toast-sub{color:#d0c7b4;margin-top:2px}',
+'@media(max-width:520px){#ach-toast{right:10px;bottom:calc(12px + env(safe-area-inset-bottom,0px))}}'
+].join('\n');
+document.head.appendChild(el('style',{},css));
+var overlay=el('div',{id:'ach-overlay'});panel=el('div',{id:'ach-panel'});overlay.appendChild(panel);document.body.appendChild(overlay);
+popup=el('div',{id:'ach-toast'},'<div class="ach-toast-icon"></div><div><div class="ach-toast-title">Достижение получено!</div><div class="ach-toast-sub"></div></div>');document.body.appendChild(popup);
+function render(){var count=defs.filter(function(d){return !!unlocked[d.id]}).length;panel.innerHTML='<h2>🏆 Достижения</h2><div id="ach-sub">Получено: '+count+' из '+defs.length+'</div>'+defs.map(function(d){var ok=!!unlocked[d.id];return '<div class="ach-row '+(ok?'':'locked')+'"><div class="ach-icon">'+(ok?d.icon:'🔒')+'</div><div><div class="ach-name">'+d.name+'</div><div class="ach-desc">'+d.desc+'</div><div class="ach-state">'+(ok?'Получено':'Ещё не получено')+'</div></div></div>'}).join('')+'<button id="ach-close">Закрыть</button>';panel.querySelector('#ach-close').onclick=close}
+function open(){render();overlay.style.display='flex'}function close(){overlay.style.display='none'}
+overlay.addEventListener('click',function(e){if(e.target===overlay)close()});document.addEventListener('keydown',function(e){if(e.key==='Escape'&&overlay.style.display==='flex')close()});
+var menu=document.querySelector('#mm .mm-col');if(menu){var b=el('button',{id:'ach-open',type:'button'},'🏆 Достижения');b.addEventListener('click',open);var anchor=document.getElementById('mmsnd');if(anchor&&anchor.parentNode===menu)anchor.insertAdjacentElement('afterend',b);else menu.appendChild(b)}
+var toastTimer=null;function notify(d){popup.querySelector('.ach-toast-icon').textContent=d.icon;popup.querySelector('.ach-toast-title').textContent='Достижение получено!';popup.querySelector('.ach-toast-sub').textContent=d.name;popup.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(function(){popup.classList.remove('show')},4200)}
+function check(){var st=window.DTH&&DTH.st;if(!st)return;defs.forEach(function(d){if(!unlocked[d.id]&&d.test(st)){unlocked[d.id]=Date.now();save();notify(d)}})}
+setInterval(check,650);window.SixthPlanetAchievements={open:open,check:check};
+})();
+</script>
 </body></html>
